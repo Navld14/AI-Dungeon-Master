@@ -167,7 +167,7 @@ SCENARIOS = [
 def get_dm_response(messages: list) -> str:
     client = anthropic.Anthropic()
     response = client.messages.create(
-        model="claude-sonnet-4-6",
+        model="claude-haiku-3-5",
         max_tokens=1000,
         system=DM_SYSTEM_PROMPT,
         messages=messages
