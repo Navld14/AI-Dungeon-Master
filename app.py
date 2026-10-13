@@ -1,7 +1,8 @@
 import streamlit as st
-import google.generativeai as genai
 import os
 import time
+from google import genai
+client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY", ""))
 
 # ── Page config ────────────────────────────────────────────────────────────────
 st.set_page_config(
@@ -165,23 +166,16 @@ SCENARIOS = [
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
 def get_dm_response(history: list, new_message: str) -> str:
-    model = genai.GenerativeModel(
-        model_name="gemini-2.0-flash-lite",
-        system_instruction=DM_SYSTEM_PROMPT
-    )
-
-    gemini_history = []
+    contents = []
     for msg in history:
         role = "user" if msg["role"] == "user" else "model"
-        gemini_history.append({
-            "role": role,
-            "parts": [msg["content"]]
-        })
+        contents.append({"role": role, "parts": [{"text": msg["content"]}]})
+    contents.append({"role": "user", "parts": [{"text": new_message}]})
 
-    chat = model.start_chat(history=gemini_history)
-    response = chat.send_message(
-        new_message,
-        request_options={"timeout": 120}  # ← add this line
+    response = client.models.generate_content(
+        model="gemini-2.0-flash-lite",
+        contents=contents,
+        config={"system_instruction": DM_SYSTEM_PROMPT}
     )
     return response.text
     
