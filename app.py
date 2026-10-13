@@ -1,4 +1,6 @@
 import streamlit as st
+import os
+from google import genai
 api_key = os.environ.get("GEMINI_API_KEY", "")
 if not api_key:
     st.error("GEMINI_API_KEY is not set!")
