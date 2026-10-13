@@ -1,8 +1,10 @@
 import streamlit as st
-import os
-import time
-from google import genai
-client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY", ""))
+api_key = os.environ.get("GEMINI_API_KEY", "")
+if not api_key:
+    st.error("GEMINI_API_KEY is not set!")
+    st.stop()
+
+client = genai.Client(api_key=api_key)
 
 # ── Page config ────────────────────────────────────────────────────────────────
 st.set_page_config(
