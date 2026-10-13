@@ -1,5 +1,6 @@
 import streamlit as st
-import anthropic
+import google.generativeai as genai
+import os
 import time
 
 # ── Page config ────────────────────────────────────────────────────────────────
@@ -9,10 +10,12 @@ st.set_page_config(
     layout="centered"
 )
 
+# ── Configure Gemini ───────────────────────────────────────────────────────────
+genai.configure(api_key=os.environ.get("GEMINI_API_KEY", ""))
+
 # ── Custom CSS ─────────────────────────────────────────────────────────────────
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=MedievalSharp&family=Inter:wght@400;500;600;700&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700&family=Inter:wght@400;500;600&display=swap');
 
 html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
@@ -104,10 +107,7 @@ html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
     border-radius: 12px;
     padding: 16px;
     margin-bottom: 10px;
-    cursor: pointer;
-    transition: border-color 0.2s;
 }
-.scenario-card:hover { border-color: #d4af37; }
 .scenario-title {
     font-family: 'Cinzel', serif;
     color: #d4af37;
@@ -132,7 +132,7 @@ DM_SYSTEM_PROMPT = """You are an expert, creative, and immersive Dungeon Master 
    • [Action 3]
    • [Something else entirely...]
 
-Keep responses engaging but concise (150-250 words). Use vivid sensory details. Build tension and atmosphere. Make the player feel like the hero of an epic story. Never break character. If the player tries something creative or unexpected, reward their creativity."""
+Keep responses engaging but concise (150-250 words). Use vivid sensory details. Build tension and atmosphere. Make the player feel like the hero of an epic story. Never break character."""
 
 # ── Scenarios ──────────────────────────────────────────────────────────────────
 SCENARIOS = [
@@ -164,26 +164,37 @@ SCENARIOS = [
 ]
 
 # ── Helpers ────────────────────────────────────────────────────────────────────
-def get_dm_response(messages: list) -> str:
-    client = anthropic.Anthropic()
-    response = client.messages.create(
-        model="claude-sonnet-4-5",
-        max_tokens=1000,
-        system=DM_SYSTEM_PROMPT,
-        messages=messages
+def get_dm_response(history: list, new_message: str) -> str:
+    model = genai.GenerativeModel(
+        model_name="gemini-1.5-flash",
+        system_instruction=DM_SYSTEM_PROMPT
     )
-    return response.content[0].text
+
+    # Build Gemini chat history format
+    gemini_history = []
+    for msg in history:
+        role = "user" if msg["role"] == "user" else "model"
+        gemini_history.append({
+            "role": role,
+            "parts": [msg["content"]]
+        })
+
+    chat = model.start_chat(history=gemini_history)
+    response = chat.send_message(new_message)
+    return response.text
 
 
 def init_session():
-    if "messages" not in st.session_state:
-        st.session_state.messages = []
-    if "game_started" not in st.session_state:
-        st.session_state.game_started = False
-    if "turn_count" not in st.session_state:
-        st.session_state.turn_count = 0
-    if "scenario_title" not in st.session_state:
-        st.session_state.scenario_title = ""
+    defaults = {
+        "stage": "setup",
+        "messages": [],
+        "game_started": False,
+        "turn_count": 0,
+        "scenario_title": ""
+    }
+    for k, v in defaults.items():
+        if k not in st.session_state:
+            st.session_state[k] = v
 
 
 # ── UI ─────────────────────────────────────────────────────────────────────────
@@ -218,9 +229,7 @@ if not st.session_state.game_started:
             if st.button("Begin", key=scenario['title']):
                 st.session_state.scenario_title = scenario['title']
                 with st.spinner("The Dungeon Master prepares your world... 🎲"):
-                    opening = get_dm_response([
-                        {"role": "user", "content": scenario['prompt']}
-                    ])
+                    opening = get_dm_response([], scenario['prompt'])
                 st.session_state.messages = [
                     {"role": "user", "content": scenario['prompt']},
                     {"role": "assistant", "content": opening}
@@ -236,9 +245,7 @@ if not st.session_state.game_started:
         if custom.strip():
             st.session_state.scenario_title = "Custom Adventure"
             with st.spinner("The Dungeon Master prepares your world... 🎲"):
-                opening = get_dm_response([
-                    {"role": "user", "content": f"Begin my adventure: {custom}. Set the scene dramatically and immersively."}
-                ])
+                opening = get_dm_response([], f"Begin my adventure: {custom}. Set the scene dramatically and immersively.")
             st.session_state.messages = [
                 {"role": "user", "content": custom},
                 {"role": "assistant", "content": opening}
@@ -251,7 +258,6 @@ if not st.session_state.game_started:
 
 # ── Active game ────────────────────────────────────────────────────────────────
 else:
-    # Stats bar
     c1, c2, c3 = st.columns(3)
     with c1:
         st.markdown(f"""<div class='stat-bar'>
@@ -282,7 +288,6 @@ else:
 
     st.markdown("---")
 
-    # Player input
     st.markdown("### ⚔️ Your Action")
     player_input = st.text_area(
         "",
@@ -294,16 +299,21 @@ else:
 
     if st.button("Take Action →", type="primary", use_container_width=True):
         if player_input.strip():
-            st.session_state.messages.append({"role": "user", "content": player_input})
+            # Build history excluding the opening prompt
+            history = st.session_state.messages[:-1] if len(st.session_state.messages) > 1 else []
 
             with st.spinner("The story unfolds... 🎲"):
-                dm_response = get_dm_response(st.session_state.messages)
+                dm_response = get_dm_response(
+                    history,
+                    player_input
+                )
 
+            st.session_state.messages.append({"role": "user", "content": player_input})
             st.session_state.messages.append({"role": "assistant", "content": dm_response})
             st.session_state.turn_count += 1
             st.rerun()
         else:
             st.warning("Type an action to continue the story!")
 
-    st.markdown("---")
-    st.markdown("<p style='text-align:center; color:#333; font-size:0.8rem'>Built with Python · Claude API · Streamlit</p>", unsafe_allow_html=True)
+st.markdown("---")
+st.markdown("<p style='text-align:center; color:#333; font-size:0.8rem'>Built with Python · Google Gemini · Streamlit</p>", unsafe_allow_html=True)
