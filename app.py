@@ -1,9 +1,10 @@
 import streamlit as st
 import os
 from google import genai
+
 api_key = os.environ.get("GEMINI_API_KEY", "")
 if not api_key:
-    st.error("GEMINI_API_KEY is not set!")
+    st.error("GEMINI_API_KEY is not set in Streamlit secrets!")
     st.stop()
 
 client = genai.Client(api_key=api_key)
@@ -14,9 +15,6 @@ st.set_page_config(
     page_icon="⚔️",
     layout="centered"
 )
-
-# ── Configure Gemini ───────────────────────────────────────────────────────────
-genai.configure(api_key=os.environ.get("GEMINI_API_KEY", ""))
 
 # ── Custom CSS ─────────────────────────────────────────────────────────────────
 st.markdown("""
