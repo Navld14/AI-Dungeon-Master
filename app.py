@@ -170,6 +170,21 @@ def get_dm_response(history: list, new_message: str) -> str:
         system_instruction=DM_SYSTEM_PROMPT
     )
 
+    gemini_history = []
+    for msg in history:
+        role = "user" if msg["role"] == "user" else "model"
+        gemini_history.append({
+            "role": role,
+            "parts": [msg["content"]]
+        })
+
+    chat = model.start_chat(history=gemini_history)
+    response = chat.send_message(
+        new_message,
+        request_options={"timeout": 120}  # ← add this line
+    )
+    return response.text
+    
     # Build Gemini chat history format
     gemini_history = []
     for msg in history:
