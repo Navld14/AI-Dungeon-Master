@@ -1,11 +1,13 @@
 # ⚔️ AI Dungeon Master
 
-A text-based RPG where Claude AI acts as your Dungeon Master — creating immersive stories, reacting to your choices, and building a dynamic narrative that remembers everything.
+A text-based RPG where Google Gemini AI acts as your Dungeon Master — creating immersive stories, reacting to your choices, and building a dynamic narrative that remembers everything.
 
 ![Python](https://img.shields.io/badge/Python-3.8+-blue?style=flat-square&logo=python)
-![Claude](https://img.shields.io/badge/Claude-API-orange?style=flat-square)
+![Gemini](https://img.shields.io/badge/Google-Gemini_API-4285F4?style=flat-square&logo=google)
 ![Streamlit](https://img.shields.io/badge/Streamlit-1.35-red?style=flat-square&logo=streamlit)
 ![License](https://img.shields.io/badge/License-MIT-green?style=flat-square)
+
+🌐 **Live Demo:** [Try it here](https://ai-dungeon-master-00.streamlit.app/)
 
 ---
 
@@ -25,7 +27,7 @@ A text-based RPG where Claude AI acts as your Dungeon Master — creating immers
 | Tool | Purpose |
 |------|---------|
 | Python | Core language |
-| Claude API (Anthropic) | AI Dungeon Master brain |
+| Google Gemini API | AI Dungeon Master brain (free tier) |
 | Streamlit | Web app + session state management |
 
 ---
@@ -34,8 +36,8 @@ A text-based RPG where Claude AI acts as your Dungeon Master — creating immers
 
 ### 1. Clone the repo
 ```bash
-git clone https://github.com/Navld14/ai-dungeon-master.git
-cd ai-dungeon-master
+git clone https://github.com/Navld14/AI-Dungeon-Master.git
+cd AI-Dungeon-Master
 ```
 
 ### 2. Install dependencies
@@ -43,16 +45,17 @@ cd ai-dungeon-master
 pip install -r requirements.txt
 ```
 
-### 3. Set your API key
+### 3. Get a free Gemini API key
+- Go to [aistudio.google.com](https://aistudio.google.com)
+- Click **Get API Key → Create API key**
+- It's completely free
+
+### 4. Set your API key
 ```bash
-cp .env.example .env
-# Add your Anthropic API key to .env
-export ANTHROPIC_API_KEY=your_key_here
+export GEMINI_API_KEY="AIzaSy..."
 ```
 
-Get your free API key at [console.anthropic.com](https://console.anthropic.com)
-
-### 4. Run the app
+### 5. Run the app
 ```bash
 streamlit run app.py
 ```
@@ -76,28 +79,24 @@ streamlit run app.py
 ```
 Player chooses scenario
         ↓
-Claude API generates opening scene (system prompt = DM instructions)
+Gemini API generates opening scene
         ↓
 Full conversation history sent with every turn
         ↓
-Claude responds as DM — describes scene + offers choices
+Gemini responds as DM — describes scene + offers choices
         ↓
 Player types action → cycle repeats
 ```
-
-The key insight: sending the **full conversation history** with every API call gives Claude complete story memory, enabling coherent, stateful narratives without any database.
 
 ---
 
 ## 📁 Project Structure
 
 ```
-ai-dungeon-master/
+AI-Dungeon-Master/
 │
 ├── app.py              # Main Streamlit application
 ├── requirements.txt    # Python dependencies
-├── .env.example        # Environment variable template
-├── .gitignore
 └── README.md
 ```
 
