@@ -166,7 +166,7 @@ SCENARIOS = [
 # ── Helpers ────────────────────────────────────────────────────────────────────
 def get_dm_response(history: list, new_message: str) -> str:
     model = genai.GenerativeModel(
-        model_name="gemini-1.5-flash",
+        model_name="gemini-2.0-flash-lite",
         system_instruction=DM_SYSTEM_PROMPT
     )
 
