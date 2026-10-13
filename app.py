@@ -175,7 +175,7 @@ def get_dm_response(history: list, new_message: str) -> str:
     contents.append({"role": "user", "parts": [{"text": new_message}]})
 
     response = client.models.generate_content(
-        model="gemini-2.0-flash-lite",
+        model="gemini-3.5-flash-lite",
         contents=contents,
         config={"system_instruction": DM_SYSTEM_PROMPT}
     )
